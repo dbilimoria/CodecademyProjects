@@ -1,0 +1,147 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import codecademylib3_seaborn
+import glob
+#putting the data files together
+census_files = glob.glob("states*.csv")
+df_list = []
+for filename in census_files: 
+  #rendering files legible in python
+  data=pd.read_csv(filename)
+  #adding all files into a list
+  df_list.append(data)
+#combining the lists  
+us_census = pd.concat(df_list).reset_index(drop=True)
+print(us_census)
+print(len(us_census))
+#length is 60 entries -- shouls only be 51 tho depending on the nunmber of states
+#removing $ sign from Income and transforming into a numerical dtype
+us_census["Income"] = us_census["Income"].replace('[\$,]','', regex = True)
+us_census["Income"] = pd.to_numeric(us_census.Income)
+income = us_census["Income"]
+#splitting gender and population into two columns - men and women, then converting from string to num
+popgen = us_census["GenderPop"].str.split('_')
+us_census["Men"] = popgen.str.get(0)
+menpop = us_census["Men"].str.split('M')
+us_census["Men"] = menpop.str.get(0)
+us_census["Men"] = pd.to_numeric(us_census["Men"])
+
+us_census["Women"] = popgen.str.get(1)
+fempop = us_census["Women"].str.split('F')
+us_census["Women"] = fempop.str.get(0)
+us_census["Women"] = pd.to_numeric(us_census["Women"])
+
+#filling empty women values with total pop - men pop; there are no empty values from us census column men
+us_census["Women"] = us_census["Women"].fillna((us_census["TotalPop"]) - (us_census["Men"]))
+
+men = us_census["Men"]
+women = us_census["Women"]
+
+print(us_census.columns)
+print(us_census.dtypes)
+print(income.head())
+print(men)
+print(women)
+print(us_census)
+
+#shows and removes duplicates from us census data by column state
+us_census.duplicated(subset = ['State'])
+us_census = us_census.drop_duplicates(subset = ['State'])
+
+print(us_census)
+print(len(us_census))
+#length now 51: 50 states and the District of Columbia
+
+plt.scatter(women, income)
+plt.title("average income vs proportion of women in that state")
+plt.legend()
+plt.show()
+plt.close('all')
+
+#Histograms of Races
+#string to float method
+us_census["Hispanic"] = us_census["Hispanic"].replace('[\%,]','', regex = True)
+us_census.Hispanic = pd.to_numeric(us_census.Hispanic)
+hispanic = us_census["Hispanic"]
+#splitting data method
+white = us_census["White"].str.split('%')
+us_census["White"] = white.str.get(0)
+us_census["White"] = pd.to_numeric(us_census["White"])
+white = us_census["White"] 
+
+#back to float method :P
+us_census["Black"] = us_census["Black"].replace('[\%,]','', regex = True)
+us_census.Black = pd.to_numeric(us_census.Black)
+black = us_census.Black
+
+us_census["Native"] = us_census["Native"].replace('[\%,]','', regex = True)
+us_census.Native = pd.to_numeric(us_census.Native)
+native = us_census.Native
+
+us_census["Asian"] = us_census["Asian"].replace('[\%,]','', regex = True)
+us_census.Asian = pd.to_numeric(us_census.Asian)
+asian = us_census.Asian
+
+us_census["Pacific"] = us_census["Pacific"].replace('[\%,]','', regex = True)
+us_census.Pacific = pd.to_numeric(us_census.Pacific)
+pacific = us_census.Pacific
+
+
+print(us_census.dtypes)
+
+
+
+#to fill in some of the race categories, a good estimate for that value would be 100 - the percentages of the other race categories
+#pt 1: determining which races have null values
+wdup = (us_census.duplicated(subset = ['White']))
+print(wdup.value_counts())
+hdup = (us_census.duplicated(subset = ['Hispanic']))
+print(hdup.value_counts())
+bdup = (us_census.duplicated(subset = ['Black']))
+print(bdup.value_counts())
+ndup = (us_census.duplicated(subset = ['Native']))
+print(ndup.value_counts())
+adup = (us_census.duplicated(subset = ['Asian']))
+print(adup.value_counts())
+pdup = (us_census.duplicated(subset = ['Pacific']))
+print(pdup.value_counts())
+# pacific is the only race cateogry with nan values (3 to be specific); values are filled in below
+
+us_census["Pacific"] = us_census["Pacific"].fillna(100 - hispanic - white - black - native - asian )
+pacific = us_census["Pacific"]
+pdup = (us_census.duplicated(subset = ['Pacific']))
+print(pdup.value_counts())
+
+plt.figure(figsize = (10, 20))
+plt.subplot(3,2,1)
+plt.hist(white)
+plt.title("White")
+plt.xlabel("percentage")
+plt.ylabel("number of states")
+plt.subplot(3,2,2)
+plt.hist(black)
+plt.title("Black")
+plt.xlabel("percentage")
+plt.ylabel("number of states")
+plt.subplot(3,2,3)
+plt.hist(hispanic)
+plt.title("Hispanic")
+plt.xlabel("percentage")
+plt.ylabel("number of states")
+plt.subplot(3,2,4)
+plt.hist(native)
+plt.title("Native")
+plt.xlabel("percentage")
+plt.ylabel("number of states")
+plt.subplot(3,2,5)
+plt.hist(asian)
+plt.title("Asian")
+plt.xlabel("percentage")
+plt.ylabel("number of states")
+plt.subplot(3,2,6)
+plt.hist(pacific)
+plt.title("Pacific")
+plt.xlabel("percentage")
+plt.ylabel("number of states")
+plt.show()
