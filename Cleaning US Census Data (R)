@@ -1,0 +1,116 @@
+---
+title: "Cleaning US Census Data"
+output: html_notebook
+---
+
+```{r message=FALSE, warning=FALSE, error=TRUE}
+# load libraries
+library(readr)
+library(dplyr)
+library(tidyr)
+
+
+```
+
+```{r message=FALSE, warning=FALSE, error=TRUE}
+# load CSVs
+files <- list.files(pattern = "states_.*csv")
+df_list <- lapply(files, read_csv)
+us_census <- bind_rows(df_list)
+
+```
+
+```{r error=TRUE}
+# inspect data
+names(us_census)
+head(us_census)
+str(us_census)
+```
+
+```{r error=TRUE}
+# drop X1 column
+us_census <- us_census %>%
+  select(- X1)
+```
+
+```{r error=TRUE}
+# remove % from race columns
+us_census <- us_census %>%
+  mutate(Hispanic = gsub('\\%', '', Hispanic)) %>%
+  mutate(White = gsub('\\%', '',White)) %>%
+  mutate(Black = gsub('\\%', '',Black)) %>%
+  mutate(Native = gsub('\\%', '',Native)) %>%
+  mutate(Asian = gsub('\\%', '',Asian)) %>%
+  mutate(Pacific = gsub('\\%', '',Pacific))
+```
+
+```{r error=TRUE}
+# remove $ from Income column
+us_census <- us_census %>%
+  mutate(Income = gsub('\\$', '', Income))
+```
+
+```{r error=TRUE}
+# separate GenderPop column
+us_census <- us_census %>%
+  separate(GenderPop, c("Male_Pop", "Female_Pop"), '_') %>%
+  mutate(Male_Pop = gsub('M', '', Male_Pop),
+         Female_Pop = gsub("F", '', Female_Pop))
+```
+
+```{r error=TRUE}
+# clean male and female population columns
+```
+
+```{r error=TRUE}
+# update column data types
+us_census <- us_census %>%
+  mutate(Hispanic = as.numeric(Hispanic),
+        White = as.numeric(White),
+        Black = as.numeric(Black),
+        Native = as.numeric(Native),
+        Asian = as.numeric(Asian),
+        Pacific = as.numeric(Pacific),
+        Income = as.numeric(Income),
+        Male_Pop = as.numeric(Male_Pop),
+        Female_Pop = as.numeric(Female_Pop))
+```
+
+```{r error=TRUE}
+# update values of race columns
+us_census <- us_census %>%
+  mutate(Hispanic = Hispanic/100,
+    White = White/100,
+    Black = Black/100,
+    Native = Native/100,
+    Asian = Asian/100, 
+    Pacific = Pacific/100)
+```
+
+```{r error=TRUE}
+# check for duplicate rows
+us_census %>%
+  duplicated() %>%
+  table()
+```
+
+```{r error=TRUE}
+# remove duplicate rows
+us_census <- us_census %>%
+  distinct()
+
+```
+
+```{r error=TRUE}
+# check for duplicate rows
+us_census %>%
+  duplicated() %>%
+  table()
+
+
+```
+
+```{r error=TRUE}
+# clean data frame
+head(us_census)
+```
